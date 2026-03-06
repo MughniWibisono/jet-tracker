@@ -23,6 +23,9 @@ function Home() {
         deliveryOrder: false
     });
 
+    // Search Filter
+    const [searchQuery, setSearchQuery] = useState('');
+
     const navigate = useNavigate();
 
     const DESTINATIONS = ["Melbourne", "Sydney", "Brisbane", "Fremantle", "Adelaide"];
@@ -101,6 +104,14 @@ function Home() {
         if (filters.clearCustoms && !item.clearCustoms) return false;
         if (filters.deliveryOrder && !item.deliveryOrder) return false;
 
+        // Search Text Filter (Jet Ref or Container No)
+        if (searchQuery.trim() !== '') {
+            const query = searchQuery.toLowerCase().trim();
+            const jetMatch = item.jetRef && typeof item.jetRef === 'string' && item.jetRef.toLowerCase().includes(query);
+            const containerMatch = item.containerNo && typeof item.containerNo === 'string' && item.containerNo.toLowerCase().includes(query);
+            if (!jetMatch && !containerMatch) return false;
+        }
+
         return true;
     });
 
@@ -170,6 +181,8 @@ function Home() {
         getDestinationFromItem(item) === activeTab && item.containerNo && item.containerNo.trim() !== '' && !item.deliveryOrder
     ).length;
 
+    const totalCityContainers = localData.filter(item => getDestinationFromItem(item) === activeTab).length;
+
     const formatStat = (qty) => {
         if (qty === 0) return ": -";
         return `: ${qty} Container${qty === 1 ? '' : 's'}`;
@@ -177,35 +190,15 @@ function Home() {
 
     return (
         <div className="app-container">
-            <header className="glass-panel app-header">
-                <div className="header-title-container">
+            <header className="glass-panel app-header" style={{ alignItems: 'flex-start', paddingBottom: '16px' }}>
+                <div className="header-title-container" style={{ marginTop: '12px' }}>
                     <LayoutDashboard className="text-primary-accent" size={28} color="var(--primary-accent)" />
                     <div>
-                        <h1 className="header-title">Jet Technologies</h1>
-                        <span className="header-subtitle">Weekly report - {formattedDateString}</span>
+                        <h1 className="header-title">Jet Technologies - {totalCityContainers} Container{totalCityContainers !== 1 ? 's' : ''}</h1>
+                        <span className="header-subtitle">Weekly report - {formattedDateString} {isDirty && <span style={{ color: 'var(--primary-accent)', marginLeft: '4px', fontSize: '1.2em' }}>*</span>}</span>
                     </div>
                 </div>
                 <div className="header-actions">
-                    {error ? (
-                        <div className="btn" style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)' }}>
-                            <CloudOff size={18} /> Disconnected
-                        </div>
-                    ) : (
-                        <div className="btn" style={{ color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)' }}>
-                            <Cloud size={18} /> Connected
-                        </div>
-                    )}
-                </div>
-            </header>
-
-            <main className="glass-panel main-content">
-                <div className="toolbar" style={{ alignItems: 'flex-start' }}>
-                    <div>
-                        <h2 className="header-subtitle" style={{ color: 'var(--text-primary)', letterSpacing: 'normal', fontWeight: 'bold' }}>
-                            Jet Shipments {isDirty && <span style={{ color: 'var(--primary-accent)' }}>*</span>}
-                        </h2>
-                    </div>
-
                     <div style={{ display: 'flex', gap: '24px', alignItems: 'stretch' }}>
                         <div style={{
                             backgroundColor: '#FFFFCC',
@@ -250,17 +243,33 @@ function Home() {
                         </div>
                     </div>
                 </div>
+            </header>
 
-                <div className="tabs-container">
-                    {DESTINATIONS.map(dest => (
-                        <button
-                            key={dest}
-                            className={`tab ${activeTab === dest ? 'active' : ''}`}
-                            onClick={() => setActiveTab(dest)}
-                        >
-                            {dest}
-                        </button>
-                    ))}
+            <main className="glass-panel main-content">
+
+                <div className="tabs-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                    <div style={{ display: 'flex' }}>
+                        {DESTINATIONS.map(dest => (
+                            <button
+                                key={dest}
+                                className={`tab ${activeTab === dest ? 'active' : ''}`}
+                                onClick={() => setActiveTab(dest)}
+                            >
+                                {dest}
+                            </button>
+                        ))}
+                    </div>
+                    <div>
+                        {error ? (
+                            <div className="btn" style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)', cursor: 'default', padding: '6px 12px' }}>
+                                <CloudOff size={16} /> Disconnected
+                            </div>
+                        ) : (
+                            <div className="btn" style={{ color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)', cursor: 'default', padding: '6px 12px' }}>
+                                <Cloud size={16} /> Connected
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '24px', padding: '0 24px 16px 24px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -321,6 +330,28 @@ function Home() {
                                 )}
                             </button>
                         ))}
+                    </div>
+
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border-color)', margin: '0 8px' }}></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Search:</span>
+                        <input
+                            type="text"
+                            placeholder="Jet Ref or Container No..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                padding: '6px 12px',
+                                borderRadius: '16px',
+                                border: '1px solid var(--border-color)',
+                                outline: 'none',
+                                fontSize: '0.8rem',
+                                color: 'var(--text-primary)',
+                                minWidth: '220px',
+                                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)'
+                            }}
+                        />
                     </div>
                 </div>
 

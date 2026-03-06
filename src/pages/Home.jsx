@@ -1,0 +1,278 @@
+import React, { useState, useEffect } from 'react';
+import '../index.css';
+import { LayoutDashboard, Plus, Save, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import DataGrid from '../components/DataGrid';
+import { useFirebaseData } from '../hooks/useFirebaseData';
+
+function Home() {
+    const { serverData, saveBatch, loading, error } = useFirebaseData('shipments');
+    const [localData, setLocalData] = useState([]);
+    const [isDirty, setIsDirty] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState('Melbourne');
+
+    // Sorting State
+    const [sortConfig, setSortConfig] = useState({ key: 'jetRef', direction: 'asc' });
+
+    // Checkbox Filters
+    const [filters, setFilters] = useState({
+        priority: false,
+        confirm: false,
+        clearCustoms: false,
+        deliveryOrder: false
+    });
+
+    const navigate = useNavigate();
+
+    const DESTINATIONS = ["Melbourne", "Sydney", "Brisbane", "Fremantle", "Adelaide"];
+
+    // Sync with server data on initial load
+    useEffect(() => {
+        if (!isDirty) {
+            const normalizedData = serverData.map(item => {
+                if (item.destination) return item;
+
+                let dest = 'Unknown';
+                if (item.remarks && item.remarks.includes('Destination: ')) {
+                    dest = item.remarks.split('Destination: ')[1].split(' ')[0].trim();
+                }
+
+                return { ...item, destination: dest };
+            });
+
+            // Sort by nusaRef and jetRef so grouping works properly
+            normalizedData.sort((a, b) => {
+                const nusaA = a.nusaRef || '';
+                const nusaB = b.nusaRef || '';
+                if (nusaA < nusaB) return -1;
+                if (nusaA > nusaB) return 1;
+
+                const jetA = a.jetRef || '';
+                const jetB = b.jetRef || '';
+                if (jetA < jetB) return -1;
+                if (jetA > jetB) return 1;
+
+                return 0;
+            });
+
+            setLocalData(normalizedData);
+        }
+    }, [serverData, isDirty]);
+
+    const handleRowChange = (updatedRow) => {
+        const newData = [...localData];
+        const index = newData.findIndex(r => r.id === updatedRow.id);
+        if (index !== -1) {
+            newData[index] = updatedRow;
+            setLocalData(newData);
+            setIsDirty(true);
+        }
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await saveBatch(localData);
+            setIsDirty(false);
+        } catch (err) {
+            alert("Error saving data. Check console.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleRevert = () => {
+        setLocalData(serverData);
+        setIsDirty(false);
+    };
+
+    const getDestinationFromItem = (item) => {
+        return item.destination || 'Unknown';
+    };
+
+    const filteredData = localData.filter(item => {
+        // Tab destination filter
+        if (getDestinationFromItem(item) !== activeTab) return false;
+
+        // Boolean Checkbox Filters
+        if (filters.priority && !item.priority) return false;
+        if (filters.confirm && !item.confirm) return false;
+        if (filters.clearCustoms && !item.clearCustoms) return false;
+        if (filters.deliveryOrder && !item.deliveryOrder) return false;
+
+        return true;
+    });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const sortedData = [...filteredData].sort((a, b) => {
+        const key = sortConfig.key;
+        let valA = a[key] || '';
+        let valB = b[key] || '';
+
+        // Always push empty/blank values to the bottom regardless of sort direction
+        if (!valA && !valB) return 0;
+        if (!valA) return 1;
+        if (!valB) return -1;
+
+        // Ensure string comparison
+        valA = String(valA).toLowerCase();
+        valB = String(valB).toLowerCase();
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const todayDate = new Date();
+    const formattedDateString = todayDate.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    return (
+        <div className="app-container">
+            <header className="glass-panel app-header">
+                <div className="header-title-container">
+                    <LayoutDashboard className="text-primary-accent" size={28} color="var(--primary-accent)" />
+                    <div>
+                        <h1 className="header-title">Jet Technologies</h1>
+                        <span className="header-subtitle">Weekly report - {formattedDateString}</span>
+                    </div>
+                </div>
+                <div className="header-actions">
+                    {error ? (
+                        <div className="btn" style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)' }}>
+                            <CloudOff size={18} /> Disconnected
+                        </div>
+                    ) : (
+                        <div className="btn" style={{ color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)' }}>
+                            <Cloud size={18} /> Connected
+                        </div>
+                    )}
+                </div>
+            </header>
+
+            <main className="glass-panel main-content">
+                <div className="toolbar">
+                    <h2 className="header-subtitle" style={{ color: 'var(--text-primary)', letterSpacing: 'normal', fontWeight: 'bold' }}>
+                        Jet Shipments {isDirty && <span style={{ color: 'var(--primary-accent)' }}>*</span>}
+                    </h2>
+                    <div className="header-actions">
+                        <button className="btn btn-secondary" onClick={() => navigate('/add')}>
+                            <Plus size={16} /> Add Container
+                        </button>
+                        {isDirty && (
+                            <button className="btn btn-secondary" onClick={handleRevert} title="Revert to saved data">
+                                <RefreshCw size={16} /> Revert
+                            </button>
+                        )}
+                        <button
+                            className={`btn btn-primary ${isSaving ? 'loading' : ''}`}
+                            onClick={handleSave}
+                            disabled={!isDirty || isSaving}
+                            style={{ opacity: (!isDirty || isSaving) ? 0.5 : 1 }}
+                        >
+                            <Save size={16} /> {isSaving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="tabs-container">
+                    {DESTINATIONS.map(dest => (
+                        <button
+                            key={dest}
+                            className={`tab ${activeTab === dest ? 'active' : ''}`}
+                            onClick={() => setActiveTab(dest)}
+                        >
+                            {dest}
+                        </button>
+                    ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: '24px', padding: '0 24px 16px 24px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        {Object.keys(filters).map(filterKey => {
+                            const labels = {
+                                priority: 'Priority',
+                                confirm: 'Confirmed',
+                                clearCustoms: 'Clear Customs',
+                                deliveryOrder: 'Delivery Order'
+                            };
+                            return (
+                                <label key={filterKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    <input
+                                        type="checkbox"
+                                        className="custom-checkbox"
+                                        checked={filters[filterKey]}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, [filterKey]: e.target.checked }))}
+                                        style={{ margin: 0 }}
+                                    />
+                                    {labels[filterKey]}
+                                </label>
+                            );
+                        })}
+                    </div>
+
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border-color)' }}></div>
+
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500, marginRight: '8px' }}>Sort by:</span>
+                        {[
+                            { key: 'jetRef', label: 'Jet Ref.' },
+                            { key: 'eta', label: 'ETA' },
+                            { key: 'deliveryDate', label: 'Delivery Date' }
+                        ].map(sortOption => (
+                            <button
+                                key={sortOption.key}
+                                onClick={() => handleSort(sortOption.key)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: sortConfig.key === sortOption.key ? 'var(--primary-accent)' : 'white',
+                                    color: sortConfig.key === sortOption.key ? 'white' : 'var(--text-secondary)',
+                                    border: `1px solid ${sortConfig.key === sortOption.key ? 'var(--primary-accent)' : 'var(--border-color)'}`,
+                                    padding: '4px 12px',
+                                    borderRadius: '16px',
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxShadow: 'var(--shadow)',
+                                    fontWeight: sortConfig.key === sortOption.key ? 600 : 400
+                                }}
+                            >
+                                {sortOption.label}
+                                {sortConfig.key === sortOption.key && (
+                                    <span style={{ fontSize: '1rem', lineHeight: 1 }}>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                        <RefreshCw size={24} className="animate-spin" />
+                        <span style={{ marginLeft: '12px' }}>Loading data...</span>
+                    </div>
+                ) : (
+                    <DataGrid
+                        data={sortedData}
+                        onRowChange={handleRowChange}
+                    />
+                )}
+            </main>
+        </div>
+    );
+}
+
+export default Home;

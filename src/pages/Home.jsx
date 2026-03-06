@@ -138,6 +138,43 @@ function Home() {
         year: 'numeric'
     });
 
+    // Summary Statistics Logic
+    const todayParams = new Date();
+    todayParams.setHours(0, 0, 0, 0);
+    const next7Days = new Date(todayParams);
+    next7Days.setDate(todayParams.getDate() + 7);
+
+    const arrivingNext7Days = localData.filter(item => {
+        if (getDestinationFromItem(item) !== activeTab) return false;
+        if (!item.eta) return false;
+
+        // Handle incoming raw date data from HTML5 (e.g., "2026-03-08")
+        const parts = item.eta.split('-');
+        if (parts.length !== 3) return false;
+
+        const yr = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+        const day = parseInt(parts[2], 10);
+
+        // Ensure etaDate is strictly set to midnight local time for fair comparison
+        const etaDate = new Date(yr, month, day, 0, 0, 0, 0);
+
+        return etaDate >= todayParams && etaDate <= next7Days;
+    }).length;
+
+    const awaitingCustomClearance = localData.filter(item =>
+        getDestinationFromItem(item) === activeTab && item.containerNo && item.containerNo.trim() !== '' && !item.clearCustoms
+    ).length;
+
+    const pendingDeliveryOrder = localData.filter(item =>
+        getDestinationFromItem(item) === activeTab && item.containerNo && item.containerNo.trim() !== '' && !item.deliveryOrder
+    ).length;
+
+    const formatStat = (qty) => {
+        if (qty === 0) return ": -";
+        return `: ${qty} Container${qty === 1 ? '' : 's'}`;
+    };
+
     return (
         <div className="app-container">
             <header className="glass-panel app-header">
@@ -162,27 +199,55 @@ function Home() {
             </header>
 
             <main className="glass-panel main-content">
-                <div className="toolbar">
-                    <h2 className="header-subtitle" style={{ color: 'var(--text-primary)', letterSpacing: 'normal', fontWeight: 'bold' }}>
-                        Jet Shipments {isDirty && <span style={{ color: 'var(--primary-accent)' }}>*</span>}
-                    </h2>
-                    <div className="header-actions">
-                        <button className="btn btn-secondary" onClick={() => navigate('/add')}>
-                            <Plus size={16} /> Add Container
-                        </button>
-                        {isDirty && (
-                            <button className="btn btn-secondary" onClick={handleRevert} title="Revert to saved data">
-                                <RefreshCw size={16} /> Revert
+                <div className="toolbar" style={{ alignItems: 'flex-start' }}>
+                    <div>
+                        <h2 className="header-subtitle" style={{ color: 'var(--text-primary)', letterSpacing: 'normal', fontWeight: 'bold' }}>
+                            Jet Shipments {isDirty && <span style={{ color: 'var(--primary-accent)' }}>*</span>}
+                        </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '24px', alignItems: 'stretch' }}>
+                        <div style={{
+                            backgroundColor: '#FFFFCC',
+                            border: '1px solid #000',
+                            padding: '12px 24px',
+                            display: 'grid',
+                            gridTemplateColumns: 'auto auto',
+                            gap: '8px 24px',
+                            color: '#000',
+                            fontWeight: 'bold',
+                            fontSize: '0.95rem',
+                            fontFamily: "'Inter', sans-serif",
+                            alignItems: 'center'
+                        }}>
+                            <div>Arriving next 7 Days</div>
+                            <div>{formatStat(arrivingNext7Days)}</div>
+                            <div>Awaiting Custom Clearance</div>
+                            <div>{formatStat(awaitingCustomClearance)}</div>
+                            <div>Pending Delivery Order</div>
+                            <div>{formatStat(pendingDeliveryOrder)}</div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center', minWidth: '180px' }}>
+                            <button className="btn btn-secondary" onClick={() => navigate('/add')} style={{ width: '100%', justifyContent: 'center' }}>
+                                <Plus size={16} /> Add Container
                             </button>
-                        )}
-                        <button
-                            className={`btn btn-primary ${isSaving ? 'loading' : ''}`}
-                            onClick={handleSave}
-                            disabled={!isDirty || isSaving}
-                            style={{ opacity: (!isDirty || isSaving) ? 0.5 : 1 }}
-                        >
-                            <Save size={16} /> {isSaving ? 'Saving...' : 'Save Changes'}
-                        </button>
+                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                {isDirty && (
+                                    <button className="btn btn-secondary" onClick={handleRevert} title="Revert to saved data" style={{ flex: 1, padding: '10px 8px' }}>
+                                        <RefreshCw size={16} />
+                                    </button>
+                                )}
+                                <button
+                                    className={`btn btn-primary ${isSaving ? 'loading' : ''}`}
+                                    onClick={handleSave}
+                                    disabled={!isDirty || isSaving}
+                                    style={{ opacity: (!isDirty || isSaving) ? 0.5 : 1, flex: 2, justifyContent: 'center' }}
+                                >
+                                    <Save size={16} /> {isSaving ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

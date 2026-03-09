@@ -200,19 +200,21 @@ function Home() {
                 </div>
                 <div className="header-actions">
                     <div style={{ display: 'flex', gap: '24px', alignItems: 'stretch' }}>
-                        <div style={{
-                            backgroundColor: '#FFFFCC',
-                            border: '1px solid #000',
-                            padding: '12px 24px',
-                            display: 'grid',
-                            gridTemplateColumns: 'auto auto',
-                            gap: '8px 24px',
-                            color: '#000',
-                            fontWeight: 'bold',
-                            fontSize: '0.95rem',
-                            fontFamily: "'Inter', sans-serif",
-                            alignItems: 'center'
-                        }}>
+                        <div
+                            className="glass-panel"
+                            style={{
+                                backgroundColor: '#FFFFCC', /* Keeps the yellow colour */
+                                padding: '16px 24px',
+                                display: 'grid',
+                                gridTemplateColumns: 'auto auto',
+                                gap: '8px 24px',
+                                color: 'var(--text-primary)',
+                                fontWeight: '600',
+                                fontSize: '0.875rem',
+                                alignItems: 'center',
+                                width: '400px'
+                            }}
+                        >
                             <div>Arriving next 7 Days</div>
                             <div>{formatStat(arrivingNext7Days)}</div>
                             <div>Awaiting Custom Clearance</div>

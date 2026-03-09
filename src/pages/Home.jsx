@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../index.css';
-import { LayoutDashboard, Plus, Save, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Plus, Save, Cloud, CloudOff, RefreshCw, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DataGrid from '../components/DataGrid';
 import { useFirebaseData } from '../hooks/useFirebaseData';
@@ -224,9 +224,14 @@ function Home() {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center', minWidth: '180px' }}>
-                            <button className="btn btn-secondary" onClick={() => navigate('/add')} style={{ width: '100%', justifyContent: 'center' }}>
-                                <Plus size={16} /> Add Container
-                            </button>
+                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                <button className="btn btn-secondary" onClick={() => navigate('/add')} style={{ flex: 1, justifyContent: 'center' }}>
+                                    <Plus size={16} /> Add
+                                </button>
+                                <button className="btn btn-secondary" onClick={() => navigate('/import')} style={{ flex: 1, justifyContent: 'center' }}>
+                                    <FileText size={16} /> Import
+                                </button>
+                            </div>
                             <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                                 {isDirty && (
                                     <button className="btn btn-secondary" onClick={handleRevert} title="Revert to saved data" style={{ flex: 1, padding: '10px 8px' }}>

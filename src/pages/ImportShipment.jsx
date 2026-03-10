@@ -91,7 +91,7 @@ export default function ImportShipment() {
                     jetRef: parsedData.jetRef || '',
                     containerNo: container.containerNo,
                     eta: parsedData.eta || '',
-                    availableDate: '',
+                    availableDate: parsedData.availableDate || '',
                     priority: false,
                     deliveryDate: '',
                     time: '',
@@ -227,6 +227,10 @@ export default function ImportShipment() {
                                 <div className="import-card">
                                     <span className="import-card-label">ETA</span>
                                     <span className="import-card-value">{parsedData.eta || '—'}</span>
+                                </div>
+                                <div className="import-card">
+                                    <span className="import-card-label">Available Date</span>
+                                    <span className="import-card-value">{parsedData.availableDate || '—'}</span>
                                 </div>
                                 <div className="import-card">
                                     <span className="import-card-label">

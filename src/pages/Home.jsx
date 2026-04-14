@@ -217,11 +217,10 @@ function Home() {
                 <div style={{
                     position: 'fixed',
                     top: 0, left: 0, right: 0, bottom: 0,
-                    boxShadow: 'inset 0 0 50px rgba(239, 68, 68, 0.4)',
-                    border: '4px solid rgba(239, 68, 68, 0.6)',
                     pointerEvents: 'none',
                     zIndex: 9999,
-                    animation: 'pulseAura 2s infinite'
+                    animation: 'pulseAura 3s infinite',
+                    transition: 'all 0.3s ease'
                 }} />
             )}
             <header className="glass-panel app-header" style={{ alignItems: 'flex-start', paddingBottom: '16px' }}>

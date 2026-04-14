@@ -64,6 +64,23 @@ function Home() {
         }
     }, [serverData, isDirty]);
 
+    // Warn user if they try to close the page with unsaved changes
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave without saving?';
+                return e.returnValue;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isDirty]);
+
     const handleRowChange = (updatedRow) => {
         const newData = [...localData];
         const index = newData.findIndex(r => r.id === updatedRow.id);
@@ -373,9 +390,9 @@ function Home() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    background: isDeleteMode ? '#fee2e2' : 'white',
-                                    color: isDeleteMode ? '#ef4444' : 'var(--text-secondary)',
-                                    border: `1px solid ${isDeleteMode ? '#ef4444' : 'var(--border-color)'}`,
+                                    background: !isDeleteMode ? '#ef4444' : '#fee2e2',
+                                    color: !isDeleteMode ? 'white' : '#ef4444',
+                                    border: `1px solid ${!isDeleteMode ? '#ef4444' : '#fca5a5'}`,
                                     padding: '6px 12px',
                                     borderRadius: '16px',
                                     fontSize: '0.8rem',

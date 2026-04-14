@@ -210,10 +210,10 @@ export default function DataGrid({ data, onRowChange, isDeleteMode, onRowDelete 
             <table>
                 <thead>
                     <tr>
+                        {isDeleteMode && <th style={{ minWidth: '60px', width: '60px', textAlign: 'center' }}>Delete</th>}
                         {COLUMNS.map(col => (
                             <th key={col.key} style={{ minWidth: col.width, width: col.width }}>{col.label}</th>
                         ))}
-                        {isDeleteMode && <th style={{ minWidth: '60px', width: '60px', textAlign: 'center' }}>Delete</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -223,6 +223,32 @@ export default function DataGrid({ data, onRowChange, isDeleteMode, onRowDelete 
 
                         return (
                             <tr key={row.id || rowIndex}>
+                                {isDeleteMode && (
+                                    <td style={{ textAlign: 'center', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--panel-bg)' }}>
+                                        <button 
+                                            onClick={() => {
+                                                if (window.confirm("Are you sure you want to delete this container?")) {
+                                                    onRowDelete(row.id);
+                                                }
+                                            }}
+                                            style={{
+                                                background: '#fee2e2',
+                                                border: '1px solid #fca5a5',
+                                                color: '#ef4444',
+                                                cursor: 'pointer',
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                margin: '0 auto'
+                                            }}
+                                            title="Delete Container"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </td>
+                                )}
                                 {COLUMNS.map(col => {
                                     // If column is grouped and this row is part of a previous group, omit throwing the <td>
                                     if (col.grouped && isOmitted) {
@@ -300,32 +326,6 @@ export default function DataGrid({ data, onRowChange, isDeleteMode, onRowDelete 
                                         </td>
                                     );
                                 })}
-                                {isDeleteMode && (
-                                    <td style={{ textAlign: 'center', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--panel-bg)' }}>
-                                        <button 
-                                            onClick={() => {
-                                                if (window.confirm("Are you sure you want to delete this container?")) {
-                                                    onRowDelete(row.id);
-                                                }
-                                            }}
-                                            style={{
-                                                background: '#fee2e2',
-                                                border: '1px solid #fca5a5',
-                                                color: '#ef4444',
-                                                cursor: 'pointer',
-                                                padding: '4px 8px',
-                                                borderRadius: '4px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                margin: '0 auto'
-                                            }}
-                                            title="Delete Container"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </td>
-                                )}
                             </tr>
                         );
                     })}

@@ -1,5 +1,6 @@
 {
     "hosting": {
+        "site": "jet-tech-report",
         "public": "dist",
         "ignore": [
             "firebase.json",

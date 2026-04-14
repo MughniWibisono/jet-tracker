@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Trash2 } from 'lucide-react';
 
 const COLUMNS = [
     { key: 'nusaRef', label: 'Nusa Ref.', type: 'text', grouped: true, width: '150px', readOnly: true },
@@ -174,7 +174,7 @@ const TimePickerCell = ({ value, onChange, disabled, style }) => {
     );
 };
 
-export default function DataGrid({ data, onRowChange }) {
+export default function DataGrid({ data, onRowChange, isDeleteMode, onRowDelete }) {
     const [editingCell, setEditingCell] = React.useState(null);
     const handleCellChange = (rowIndex, colKey, value) => {
         const updatedRow = { ...data[rowIndex], [colKey]: value };
@@ -213,6 +213,7 @@ export default function DataGrid({ data, onRowChange }) {
                         {COLUMNS.map(col => (
                             <th key={col.key} style={{ minWidth: col.width, width: col.width }}>{col.label}</th>
                         ))}
+                        {isDeleteMode && <th style={{ minWidth: '60px', width: '60px', textAlign: 'center' }}>Delete</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -299,12 +300,38 @@ export default function DataGrid({ data, onRowChange }) {
                                         </td>
                                     );
                                 })}
+                                {isDeleteMode && (
+                                    <td style={{ textAlign: 'center', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--panel-bg)' }}>
+                                        <button 
+                                            onClick={() => {
+                                                if (window.confirm("Are you sure you want to delete this container?")) {
+                                                    onRowDelete(row.id);
+                                                }
+                                            }}
+                                            style={{
+                                                background: '#fee2e2',
+                                                border: '1px solid #fca5a5',
+                                                color: '#ef4444',
+                                                cursor: 'pointer',
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                margin: '0 auto'
+                                            }}
+                                            title="Delete Container"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </td>
+                                )}
                             </tr>
                         );
                     })}
                     {data.length === 0 && (
                         <tr>
-                            <td colSpan={COLUMNS.length} style={{ textAlign: 'center', padding: '32px' }}>
+                            <td colSpan={COLUMNS.length + (isDeleteMode ? 1 : 0)} style={{ textAlign: 'center', padding: '32px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
                                     <AlertCircle size={32} opacity={0.5} />
                                     <p>No shipments found. Click "Add Container" to get started.</p>

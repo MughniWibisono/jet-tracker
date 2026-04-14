@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../index.css';
-import { LayoutDashboard, Plus, Save, Cloud, CloudOff, RefreshCw, FileText } from 'lucide-react';
+import { LayoutDashboard, Plus, Save, Cloud, CloudOff, RefreshCw, FileText, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DataGrid from '../components/DataGrid';
 import { useFirebaseData } from '../hooks/useFirebaseData';
@@ -25,6 +25,7 @@ function Home() {
 
     // Search Filter
     const [searchQuery, setSearchQuery] = useState('');
+    const [isDeleteMode, setIsDeleteMode] = useState(false);
 
     const navigate = useNavigate();
 
@@ -71,6 +72,11 @@ function Home() {
             setLocalData(newData);
             setIsDirty(true);
         }
+    };
+
+    const handleDeleteRow = (id) => {
+        setLocalData(prev => prev.filter(r => r.id !== id));
+        setIsDirty(true);
     };
 
     const handleSave = async () => {
@@ -341,7 +347,7 @@ function Home() {
 
                     <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border-color)', margin: '0 8px' }}></div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Search:</span>
                         <input
                             type="text"
@@ -359,6 +365,29 @@ function Home() {
                                 boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)'
                             }}
                         />
+                        
+                        <div style={{ marginLeft: 'auto' }}>
+                            <button
+                                onClick={() => setIsDeleteMode(!isDeleteMode)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: isDeleteMode ? '#fee2e2' : 'white',
+                                    color: isDeleteMode ? '#ef4444' : 'var(--text-secondary)',
+                                    border: `1px solid ${isDeleteMode ? '#ef4444' : 'var(--border-color)'}`,
+                                    padding: '6px 12px',
+                                    borderRadius: '16px',
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxShadow: 'var(--shadow)',
+                                    fontWeight: isDeleteMode ? 600 : 400
+                                }}
+                            >
+                                <Trash2 size={14} /> Delete Mode
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -371,6 +400,8 @@ function Home() {
                     <DataGrid
                         data={sortedData}
                         onRowChange={handleRowChange}
+                        isDeleteMode={isDeleteMode}
+                        onRowDelete={handleDeleteRow}
                     />
                 )}
             </main>
